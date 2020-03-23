@@ -32,9 +32,13 @@ end
 
 struct PosteriorSample{T}
     ess::T
+    pps::Vector
     πs ::Matrix{T}
     Ps ::Array{T,3}
 end
+
+Base.show(io::IO, ps::PosteriorSample) = write(io,
+    "ESS = $(ps.ess)\n x = \n$(join([" ⋅ $k: $v" for (k,v) in ps.pps], "\n"))")
 
 function ObservedMarkovChain(x::Vector{I}, ϵ=:auto) where I<:Integer
     N, nstates, minstate = observed_transitions(x)
@@ -80,7 +84,7 @@ function sample(d::ObservedMarkovChain, n)
         πs[:,i] = π
         Ps[:,:,i] = P
     end
-    PosteriorSample(ess(d, πs), πs, Ps)
+    PosteriorSample(ess(d, πs), pps(d, πs), πs, Ps)
 end
 
 """
@@ -106,10 +110,9 @@ function ess(d::ObservedMarkovChain, πs::Matrix)
     sum(fitted_dir.alpha) - sum(d.prior)
 end
 
-function describe(d::ObservedMarkovChain, smpl::PosteriorSample)
-    means = vec(mean(smpl.πs, dims=2))
-    pps = [i+d.minstate => means[i] for i=1:length(means)]
-    @info "ESS and posterior probabilities" smpl.ess pps
+function pps(d::ObservedMarkovChain, πs)
+    means = vec(mean(πs, dims=2))
+    [i+d.minstate => means[i] for i=1:length(means)]
 end
 
 end

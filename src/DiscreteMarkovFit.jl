@@ -38,7 +38,7 @@ struct PosteriorSample{T}
 end
 
 Base.show(io::IO, ps::PosteriorSample) = write(io,
-    "ESS = $(ps.ess)\n x = \n$(join([" ⋅ $k: $v" for (k,v) in ps.pps], "\n"))")
+    "ESS = $(ps.ess)\n  π = \n$(join([" ⋅ $k: $v" for (k,v) in ps.pps], "\n"))")
 
 function ObservedMarkovChain(x::Vector{I}, ϵ=:auto) where I<:Integer
     N, nstates, minstate = observed_transitions(x)

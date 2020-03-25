@@ -1,5 +1,5 @@
 using DiscreteMarkovFit
-using Test, Distributions, Random, DataFrames
+using Test, Distributions, Random, DataFrames, CSV
 
 Random.seed!(19081994)
 

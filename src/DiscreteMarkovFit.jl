@@ -32,13 +32,13 @@ end
 
 struct PosteriorSample{T}
     ess::T
-    pps::Vector
     πs ::Matrix{T}
     Ps ::Array{T,3}
+    minstate::Int
 end
 
 Base.show(io::IO, ps::PosteriorSample) = write(io,
-    "ESS = $(ps.ess)\n  π = \n$(join([" ⋅ $k: $v" for (k,v) in ps.pps], "\n"))")
+    "ESS = $(ps.ess)\n  π = \n ⋅$(join(sort(collect(describe(ps))), "\n ⋅"))")
 
 function ObservedMarkovChain(x::Vector{I}, ϵ=:auto) where I<:Integer
     N, nstates, minstate = observed_transitions(x)
@@ -84,7 +84,7 @@ function sample(d::ObservedMarkovChain, n)
         πs[:,i] = π
         Ps[:,:,i] = P
     end
-    PosteriorSample(ess(d, πs), pps(d, πs), πs, Ps)
+    PosteriorSample(ess(d, πs), πs, Ps, d.minstate)
 end
 
 """
@@ -110,9 +110,13 @@ function ess(d::ObservedMarkovChain, πs::Matrix)
     sum(fitted_dir.alpha) - sum(d.prior)
 end
 
-function pps(d::ObservedMarkovChain, πs)
-    means = vec(mean(πs, dims=2))
-    [i+d.minstate => means[i] for i=1:length(means)]
+function describe(p::PosteriorSample)
+    means = vec(mean(p.πs, dims=2))
+    stds  = vec(std(p.πs, dims=2))
+    cred  = [quantile(p.πs[i,:], [0.025, 0.975]) for i in 1:size(p.πs)[1]]
+    Dict(i + p.minstate => (; zip([:mean, :std, :q025, :q0975],
+        round.([means[i], stds[i], cred[i]...], digits=3))...)
+        for i=1:length(means))
 end
 
 end
